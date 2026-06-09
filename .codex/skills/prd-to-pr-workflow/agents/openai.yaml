@@ -1,0 +1,4 @@
+interface:
+  display_name: "PRD to PR Workflow"
+  short_description: "从 PRD 到 PR 的 AI 编码流水线"
+  default_prompt: "使用 $prd-to-pr-workflow 按设计文档、TDD、review、E2E 验证和 PR 门禁实现一个 PRD。"
