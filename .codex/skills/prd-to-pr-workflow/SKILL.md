@@ -39,6 +39,7 @@ description: PRD 驱动的软件开发 workflow skill，用于规范从需求理
    - 创建 `design/<prd-slug>/ui-<prd-slug>.md`，用于 UI/窗口/组件设计、状态、交互、可访问性和 UI BDD。
    - 创建 `design/<prd-slug>/app-<prd-slug>.md`，用于后端/原生/领域设计、存储、服务、权限、事件和 CDD。
    - 创建 `tasks/<prd-slug>.md`，用于一步一步执行的任务清单。
+   - 所有生成文档必须以中文为主；除 PRD、UI、API、DTO、BDD、CDD、TDD、E2E、PR、Red/Green/Refactor 等必要工程术语外，不要生成英文标题或英文段落。
    - 创建文档前读取 `references/design-artifacts.md`。
 
 4. 运行设计产物 review loop。
