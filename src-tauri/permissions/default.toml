@@ -1,0 +1,25 @@
+[[permission]]
+identifier = "allow-app-commands"
+description = "Allows the bundled desktop UI to call Cute Clipboard Agent commands."
+commands.allow = [
+  "get_pet_settings",
+  "move_pet_window_by",
+  "save_pet_position",
+  "update_pet_behavior_settings",
+  "open_history_panel",
+  "close_history_panel",
+  "open_settings_window",
+  "get_clipboard_recording_settings",
+  "update_clipboard_recording_settings",
+  "set_recording_paused",
+  "suppress_next_clipboard_hash",
+  "list_clipboard_history",
+  "get_clipboard_history_item",
+  "restore_clipboard_history_item",
+  "delete_clipboard_history_item",
+  "clear_clipboard_history",
+  "update_clipboard_history_settings",
+  "debug_process_clipboard_text",
+  "show_pet_context_menu",
+  "quit_app"
+]

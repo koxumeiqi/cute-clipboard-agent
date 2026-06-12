@@ -3,3 +3,33 @@ comments-params.json
 feishu-comments-raw.json
 feishu-comments-raw.stderr.txt
 
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+target/
+src-tauri/target/
+src-tauri/gen/
+
+# Local runtime state
+.agent_context/
+.cargo/
+.codegraph/
+.multica/
+
+# Logs and temporary diagnostics
+*.log
+*.out.log
+*.err.log
+*.stderr.txt
+
+# Local screenshots / manual verification artifacts
+*.png
+image.png
+
+# Local result notes
+multica-result-*.md
+reply.md

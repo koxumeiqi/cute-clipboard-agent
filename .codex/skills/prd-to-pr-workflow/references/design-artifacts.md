@@ -2,6 +2,13 @@
 
 编码前必须先创建这些文件。
 
+## 语言要求
+
+- 生成的所有设计文档和任务文档必须以中文为主。
+- 文档标题、章节名、表头、说明文字、清单项都应使用中文。
+- 允许保留必要工程术语，例如 PRD、UI、API、DTO、BDD、CDD、TDD、E2E、PR、Red/Green/Refactor、commands、events。
+- 不要生成 `Base Design`、`UI Design`、`Application Design`、`Source`、`Goal`、`Non-Goals`、`Runtime Responsibilities` 等英文章节标题。
+
 ## 目录结构
 
 ```text
@@ -22,7 +29,7 @@ tasks/
 必需章节：
 
 ```markdown
-# <PRD 标题> - Base Design
+# <PRD 标题> - 基础设计
 
 ## 来源
 - PRD：
@@ -36,10 +43,10 @@ tasks/
 ## 共享领域模型
 
 ## 公共契约
-### Commands / APIs
-### Events
-### Permissions
-### Persistence
+### 命令 / API
+### 事件
+### 权限
+### 持久化
 
 ## UI-App 集成契约
 ### UI 调用
@@ -53,9 +60,9 @@ tasks/
 
 ## BDD 场景
 ### 场景：...
-Given ...
-When ...
-Then ...
+前置条件：
+触发动作：
+预期结果：
 
 ## 成功标准
 | 标准 | 来源 | 自动化证据 | 人工证据 |
@@ -74,18 +81,18 @@ Then ...
 必需章节：
 
 ```markdown
-# <PRD 标题> - UI Design
+# <PRD 标题> - 界面设计
 
 ## 页面 / 窗口 / 入口
 
 ## 组件结构
 
 ## 状态
-- loading
-- ready
-- empty
-- error
-- disabled / unauthorized
+- 加载中
+- 就绪
+- 空状态
+- 错误
+- 禁用 / 未授权
 
 ## 交互
 
@@ -111,7 +118,7 @@ Then ...
 必需章节：
 
 ```markdown
-# <PRD 标题> - Application Design
+# <PRD 标题> - 应用设计
 
 ## 运行时职责
 
@@ -143,7 +150,7 @@ Then ...
 必需章节：
 
 ```markdown
-# <PRD 标题> - Tasks
+# <PRD 标题> - 任务计划
 
 ## 状态
 - 分支：
@@ -151,7 +158,7 @@ Then ...
 - 设计：
 
 ## 计划
-- [ ] 1. 根据 PRD/design 定义实现 slices
+- [ ] 1. 根据 PRD/design 定义实现切片
 - [ ] 2. 运行设计产物 review loop
 - [ ] 3. 为 slice 1 创建失败测试
 - [ ] 4. 实现 slice 1 直到测试通过
@@ -168,13 +175,13 @@ Then ...
 |---|---|---|---|---|---|
 |  |  |  |  |  |  |
 
-## 实现 Slices
-| Slice | 行为 | 是否测试先行 | 负责区域 | 状态 |
+## 实现切片
+| 切片 | 行为 | 是否测试先行 | 负责区域 | 状态 |
 |---|---|---|---|---|
 |  |  |  |  |  |
 
 ## TDD 记录
-| Slice | Red 命令 / 结果 | Green 命令 / 结果 | Refactor 说明 | Blocker / 替代验证 |
+| 切片 | Red 命令 / 结果 | Green 命令 / 结果 | Refactor 说明 | 阻塞项 / 替代验证 |
 |---|---|---|---|---|
 |  |  |  |  |  |
 
