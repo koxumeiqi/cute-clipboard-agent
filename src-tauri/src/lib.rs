@@ -47,6 +47,24 @@ pub fn run() {
             if std::env::args().any(|arg| arg == "--e2e-open-history") {
                 windows::open_history_panel(app.handle())?;
             }
+            if let Some(seed_text) = std::env::args().find_map(|arg| {
+                arg.strip_prefix("--e2e-seed-history-text=")
+                    .map(std::string::ToString::to_string)
+            }) {
+                let settings = app
+                    .state::<clipboard::ClipboardRecorderStore>()
+                    .load(app.handle())?;
+                let recorder_state = app.state::<std::sync::Mutex<clipboard::ClipboardRecorder>>();
+                let mut recorder = recorder_state
+                    .lock()
+                    .map_err(|_| "clipboard_recorder_lock_failed")?;
+                if let clipboard::ClipboardProcessOutcome::Created(item) =
+                    recorder.process(clipboard::ClipboardRawContent::Text(seed_text), &settings)
+                {
+                    let item = app.state::<history::ClipboardHistoryStore>().push(item)?;
+                    events::emit_clipboard_created(app.handle(), &item);
+                }
+            }
             if std::env::args().any(|arg| arg == "--e2e-move-pet-after-open-history") {
                 windows::move_pet_window_by(app.handle(), 60, 35)?;
             }

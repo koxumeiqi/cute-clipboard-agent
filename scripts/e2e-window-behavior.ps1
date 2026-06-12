@@ -5,7 +5,8 @@ param(
   [switch]$CloseHistoryFromRust,
   [switch]$SkipDevServer,
   [int]$WebviewReadyDelayMs = 2500,
-  [int]$RemoteDebuggingPort = 9226
+  [int]$RemoteDebuggingPort = 9226,
+  [string]$SeedText = "CuteClipboardE2EHistoryItem"
 )
 
 $ErrorActionPreference = "Stop"
@@ -127,6 +128,32 @@ function Click-At([int]$X, [int]$Y, [int]$Count = 1) {
   }
 }
 
+function Find-PetWindow([int]$ProcessId) {
+  Get-AppWindows $ProcessId |
+    Where-Object {
+      $_.Visible -and
+      (
+        $_.Title -eq "Cute Clipboard Agent" -or
+        (($_.Width -ge 120 -and $_.Width -le 220) -and ($_.Height -ge 120 -and $_.Height -le 240))
+      )
+    } |
+    Sort-Object @{ Expression = { if ($_.Title -eq "Cute Clipboard Agent") { 0 } else { 1 } } }, Width |
+    Select-Object -First 1
+}
+
+function Find-HistoryWindow([int]$ProcessId) {
+  Get-AppWindows $ProcessId |
+    Where-Object {
+      $_.Visible -and
+      (
+        $_.Title -eq "Clipboard History" -or
+        (($_.Width -ge 360 -and $_.Width -le 520) -and ($_.Height -ge 460 -and $_.Height -le 660))
+      )
+    } |
+    Sort-Object @{ Expression = { if ($_.Title -eq "Clipboard History") { 0 } else { 1 } } }, Width |
+    Select-Object -First 1
+}
+
 function Drag-FromTo([int]$StartX, [int]$StartY, [int]$EndX, [int]$EndY) {
   [void][Win32E2E]::SetCursorPos($StartX, $StartY)
   Start-Sleep -Milliseconds 100
@@ -160,6 +187,13 @@ function Drag-WindowByCaption([IntPtr]$Handle, [int]$StartX, [int]$StartY, [int]
   [Win32E2E]::mouse_event([Win32E2E]::MOUSEEVENTF_LEFTUP, 0, 0, 0, [UIntPtr]::Zero)
 }
 
+function Invoke-NodeOrThrow([string]$ScriptPath, [object[]]$Arguments) {
+  & node $ScriptPath @Arguments
+  if ($LASTEXITCODE -ne 0) {
+    throw "Node helper failed: $ScriptPath"
+  }
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $devServerProcess = $null
 $devServerPidsBefore = @()
@@ -189,6 +223,9 @@ if ($MovePetAfterOpenHistory) {
 if ($CloseHistoryFromRust) {
   $startArgs += "--e2e-close-history-after-open"
 }
+if (-not [string]::IsNullOrWhiteSpace($SeedText)) {
+  $startArgs += "--e2e-seed-history-text=$SeedText"
+}
 if ($startArgs.Count -gt 0) {
   $process = Start-Process -FilePath $resolvedExe -ArgumentList $startArgs -PassThru
 } else {
@@ -198,7 +235,7 @@ if ($startArgs.Count -gt 0) {
 try {
   try {
     $pet = Wait-Until {
-      Get-AppWindows $process.Id | Where-Object { $_.Visible -and $_.Title -eq "Cute Clipboard Agent" } | Select-Object -First 1
+      Find-PetWindow $process.Id
     } -Message "pet window"
   } catch {
     $windowsAfterStart = Get-AppWindows $process.Id
@@ -219,7 +256,7 @@ try {
 
   try {
     $history = Wait-Until {
-      Get-AppWindows $process.Id | Where-Object { $_.Visible -and $_.Title -eq "Clipboard History" } | Select-Object -First 1
+      Find-HistoryWindow $process.Id
     } -Message "history window"
   } catch {
     $windowsAfterClick = Get-AppWindows $process.Id
@@ -227,24 +264,28 @@ try {
   }
 
   Start-Sleep -Milliseconds 1800
+  if (-not [string]::IsNullOrWhiteSpace($SeedText)) {
+    Invoke-NodeOrThrow (Join-Path $PSScriptRoot "cdp-assert-history-content.cjs") @($RemoteDebuggingPort, $SeedText)
+  }
+
   if ($MovePetAfterOpenHistory) {
     $beforeDrag = $pet
-    $afterDrag = Get-AppWindows $process.Id | Where-Object { $_.Visible -and $_.Title -eq "Cute Clipboard Agent" } | Select-Object -First 1
+    $afterDrag = Find-PetWindow $process.Id
     $moved = ($afterDrag.Left -ne $beforeDrag.Left) -or ($afterDrag.Top -ne $beforeDrag.Top)
   } else {
-    $beforeDrag = Get-AppWindows $process.Id | Where-Object { $_.Visible -and $_.Title -eq "Cute Clipboard Agent" } | Select-Object -First 1
+    $beforeDrag = Find-PetWindow $process.Id
     $dragStartX = [int]($beforeDrag.Left + 84)
     $dragStartY = [int]($beforeDrag.Top + 86)
     [void][Win32E2E]::SetCursorPos($dragStartX, $dragStartY)
     Start-Sleep -Milliseconds 300
     Drag-FromTo $dragStartX $dragStartY ($dragStartX + 60) ($dragStartY + 35)
     Start-Sleep -Milliseconds 1400
-    $afterDrag = Get-AppWindows $process.Id | Where-Object { $_.Visible -and $_.Title -eq "Cute Clipboard Agent" } | Select-Object -First 1
+    $afterDrag = Find-PetWindow $process.Id
     $moved = ($afterDrag.Left -ne $beforeDrag.Left) -or ($afterDrag.Top -ne $beforeDrag.Top)
     if (-not $moved) {
       Drag-WindowByCaption $beforeDrag.Handle $dragStartX $dragStartY ($dragStartX + 60) ($dragStartY + 35)
       Start-Sleep -Milliseconds 700
-      $afterDrag = Get-AppWindows $process.Id | Where-Object { $_.Visible -and $_.Title -eq "Cute Clipboard Agent" } | Select-Object -First 1
+      $afterDrag = Find-PetWindow $process.Id
       $moved = ($afterDrag.Left -ne $beforeDrag.Left) -or ($afterDrag.Top -ne $beforeDrag.Top)
     }
   }
@@ -254,10 +295,10 @@ try {
   }
 
   if (-not $CloseHistoryFromRust) {
-    node (Join-Path $PSScriptRoot "cdp-click-history-close.cjs") $RemoteDebuggingPort
+    Invoke-NodeOrThrow (Join-Path $PSScriptRoot "cdp-click-history-close.cjs") @($RemoteDebuggingPort)
   }
   Start-Sleep -Milliseconds 700
-  $historyAfterClose = Get-AppWindows $process.Id | Where-Object { $_.Title -eq "Clipboard History" } | Select-Object -First 1
+  $historyAfterClose = Find-HistoryWindow $process.Id
   if ($historyAfterClose -and $historyAfterClose.Visible) {
     throw "History window is still visible after WM_CLOSE"
   }
