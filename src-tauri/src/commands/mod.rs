@@ -12,7 +12,10 @@ use crate::{
         ClipboardHistoryItemRequest, ClipboardHistorySnapshot, ClipboardHistoryStore,
         UpdateClipboardHistorySettingsRequest,
     },
-    settings::{PetPosition, PetSettings, PetSettingsStore, UpdatePetBehaviorSettingsRequest},
+    settings::{
+        AppPreferencesStore, AppSettings, PetPosition, PetSettings, PetSettingsStore,
+        UpdateAppSettingsRequest, UpdatePetBehaviorSettingsRequest,
+    },
     windows,
 };
 
@@ -93,6 +96,61 @@ pub fn update_pet_behavior_settings(
             .set_always_on_top(settings.always_on_top)
             .map_err(|_| "window_operation_failed".to_string())?;
     }
+    Ok(settings)
+}
+
+#[tauri::command]
+pub fn get_app_settings(
+    app: AppHandle,
+    pet_store: State<'_, PetSettingsStore>,
+    clipboard_store: State<'_, ClipboardRecorderStore>,
+    history_store: State<'_, ClipboardHistoryStore>,
+    preferences_store: State<'_, AppPreferencesStore>,
+) -> Result<AppSettings, String> {
+    crate::settings::load_app_settings(
+        &app,
+        &pet_store,
+        &clipboard_store,
+        &history_store,
+        &preferences_store,
+    )
+    .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn update_app_settings(
+    app: AppHandle,
+    pet_store: State<'_, PetSettingsStore>,
+    clipboard_store: State<'_, ClipboardRecorderStore>,
+    history_store: State<'_, ClipboardHistoryStore>,
+    preferences_store: State<'_, AppPreferencesStore>,
+    request: UpdateAppSettingsRequest,
+) -> Result<AppSettings, String> {
+    let previous = crate::settings::load_app_settings(
+        &app,
+        &pet_store,
+        &clipboard_store,
+        &history_store,
+        &preferences_store,
+    )
+    .map_err(|error| error.to_string())?;
+    let settings = crate::settings::update_app_settings(
+        &app,
+        &pet_store,
+        &clipboard_store,
+        &history_store,
+        &preferences_store,
+        request,
+    )
+    .map_err(|error| error.to_string())?;
+    if previous.recording_paused != settings.recording_paused {
+        if settings.recording_paused {
+            events::emit_recording_paused(&app);
+        } else {
+            events::emit_recording_resumed(&app);
+        }
+    }
+    events::emit_settings_updated(&app, settings.clone());
     Ok(settings)
 }
 

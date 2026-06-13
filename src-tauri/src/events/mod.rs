@@ -4,7 +4,7 @@ use time::OffsetDateTime;
 
 use crate::{
     clipboard::{ClipboardEventItem, ClipboardReadFailureReason},
-    settings::PetPosition,
+    settings::{AppSettings, PetPosition},
 };
 
 const CLIPBOARD_CHANGED: &str = "clipboard.changed";
@@ -15,6 +15,9 @@ const CLIPBOARD_DELETED: &str = "clipboard.deleted";
 const HISTORY_CLEARED: &str = "history.cleared";
 const PET_DOUBLE_CLICKED: &str = "pet.double_clicked";
 const PET_DRAG_ENDED: &str = "pet.drag_ended";
+const SETTINGS_UPDATED: &str = "settings.updated";
+const SETTINGS_RECORDING_PAUSED: &str = "settings.clipboard_recording_paused";
+const SETTINGS_RECORDING_RESUMED: &str = "settings.clipboard_recording_resumed";
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -62,6 +65,13 @@ struct ClipboardDeletedPayload {
 struct HistoryClearedPayload {
     at: String,
     deleted_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SettingsUpdatedPayload {
+    at: String,
+    settings: AppSettings,
 }
 
 pub fn emit_pet_double_clicked(app: &AppHandle) {
@@ -130,6 +140,24 @@ pub fn emit_history_cleared(app: &AppHandle, deleted_count: usize) {
             deleted_count,
         },
     );
+}
+
+pub fn emit_settings_updated(app: &AppHandle, settings: AppSettings) {
+    let _ = app.emit(
+        SETTINGS_UPDATED,
+        SettingsUpdatedPayload {
+            at: now_rfc3339(),
+            settings,
+        },
+    );
+}
+
+pub fn emit_recording_paused(app: &AppHandle) {
+    let _ = app.emit(SETTINGS_RECORDING_PAUSED, PetEventPayload { at: now_rfc3339() });
+}
+
+pub fn emit_recording_resumed(app: &AppHandle) {
+    let _ = app.emit(SETTINGS_RECORDING_RESUMED, PetEventPayload { at: now_rfc3339() });
 }
 
 fn now_rfc3339() -> String {

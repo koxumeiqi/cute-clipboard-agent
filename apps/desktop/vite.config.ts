@@ -15,7 +15,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         pet: resolve(__dirname, "index.html"),
-        history: resolve(__dirname, "history.html")
+        history: resolve(__dirname, "history.html"),
+        settings: resolve(__dirname, "settings.html")
       }
     }
   },

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { PetSettings } from "@cute-clipboard/shared-contracts";
-import { DEFAULT_PET_SETTINGS } from "@cute-clipboard/shared-contracts";
+import type { PetSettings, SettingsUpdatedPayload } from "@cute-clipboard/shared-contracts";
+import { DEFAULT_PET_SETTINGS, SETTINGS_EVENT_NAMES } from "@cute-clipboard/shared-contracts";
 import { currentWindowOuterPosition, getPetSettings, movePetWindowBy, openHistoryPanel, openSettingsWindow, quitApp, savePetPosition, setRecordingPaused } from "../../shared/api/pet-api";
 import { Pet } from "./pet";
 
@@ -30,6 +31,33 @@ export function PetWindow() {
     return () => {
       cancelled = true;
       window.clearTimeout(fallbackTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    listen<SettingsUpdatedPayload>(SETTINGS_EVENT_NAMES.updated, ({ payload }) => {
+      if (disposed) return;
+      setSettings((current) => ({
+        ...current,
+        idleAnimationEnabled: payload.settings.idleAnimationEnabled,
+        autoMoveEnabled: payload.settings.autoMoveEnabled
+      }));
+    })
+      .then((nextUnlisten) => {
+        if (disposed) {
+          nextUnlisten();
+        } else {
+          unlisten = nextUnlisten;
+        }
+      })
+      .catch(() => {
+        if (!disposed) setFailed(true);
+      });
+    return () => {
+      disposed = true;
+      unlisten?.();
     };
   }, []);
 

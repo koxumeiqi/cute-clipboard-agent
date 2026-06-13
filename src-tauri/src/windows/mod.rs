@@ -52,9 +52,9 @@ pub fn open_settings_window(app: &AppHandle) -> tauri::Result<()> {
         app,
         "settings",
         "Settings",
-        "index.html",
+        "settings.html",
         520.0,
-        460.0,
+        620.0,
         None,
     )
     .map(|_| ())

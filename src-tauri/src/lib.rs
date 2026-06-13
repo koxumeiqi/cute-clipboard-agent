@@ -17,8 +17,11 @@ pub fn run() {
             clipboard::ClipboardRecorder::default(),
         ))
         .manage(settings::PetSettingsStore::default())
+        .manage(settings::AppPreferencesStore::default())
         .invoke_handler(tauri::generate_handler![
             commands::get_pet_settings,
+            commands::get_app_settings,
+            commands::update_app_settings,
             commands::move_pet_window_by,
             commands::save_pet_position,
             commands::update_pet_behavior_settings,
@@ -81,6 +84,9 @@ pub fn run() {
                     }
                     let _ = windows::close_history_panel(&handle);
                 });
+            }
+            if std::env::args().any(|arg| arg == "--e2e-open-settings") {
+                windows::open_settings_window(app.handle())?;
             }
             Ok(())
         })
